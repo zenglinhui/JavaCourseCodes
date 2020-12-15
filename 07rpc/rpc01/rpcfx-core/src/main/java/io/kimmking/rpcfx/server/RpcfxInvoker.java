@@ -2,9 +2,10 @@ package io.kimmking.rpcfx.server;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
-import io.kimmking.rpcfx.api.RpcfxRequest;
+import io.kimmking.rpcfx.api.RpcfxReflectionResolver;
+import io.kimmking.rpcfx.param.RpcfxRequest;
 import io.kimmking.rpcfx.api.RpcfxResolver;
-import io.kimmking.rpcfx.api.RpcfxResponse;
+import io.kimmking.rpcfx.param.RpcfxResponse;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -12,10 +13,15 @@ import java.util.Arrays;
 
 public class RpcfxInvoker {
 
-    private RpcfxResolver resolver;
+/*    private RpcfxResolver resolver;
 
     public RpcfxInvoker(RpcfxResolver resolver){
         this.resolver = resolver;
+    }*/
+    private RpcfxReflectionResolver reflectionResolver;
+
+    public RpcfxInvoker(RpcfxReflectionResolver reflectionResolver) {
+        this.reflectionResolver = reflectionResolver;
     }
 
     public RpcfxResponse invoke(RpcfxRequest request) {
@@ -23,7 +29,8 @@ public class RpcfxInvoker {
         String serviceClass = request.getServiceClass();
 
         // 作业1：改成泛型和反射
-        Object service = resolver.resolve(serviceClass);//this.applicationContext.getBean(serviceClass);
+        //Object service = resolver.resolve(serviceClass);//this.applicationContext.getBean(serviceClass);
+        Object service = reflectionResolver.resolve(serviceClass);
 
         try {
             Method method = resolveMethodFromClass(service.getClass(), request.getMethod());

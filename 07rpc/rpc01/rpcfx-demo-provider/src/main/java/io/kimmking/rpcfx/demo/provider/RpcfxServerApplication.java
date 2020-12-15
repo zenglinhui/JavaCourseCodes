@@ -1,8 +1,9 @@
 package io.kimmking.rpcfx.demo.provider;
 
-import io.kimmking.rpcfx.api.RpcfxRequest;
+import io.kimmking.rpcfx.api.RpcfxReflectionResolver;
+import io.kimmking.rpcfx.param.RpcfxRequest;
 import io.kimmking.rpcfx.api.RpcfxResolver;
-import io.kimmking.rpcfx.api.RpcfxResponse;
+import io.kimmking.rpcfx.param.RpcfxResponse;
 import io.kimmking.rpcfx.demo.api.OrderService;
 import io.kimmking.rpcfx.demo.api.UserService;
 import io.kimmking.rpcfx.server.RpcfxInvoker;
@@ -31,14 +32,19 @@ public class RpcfxServerApplication {
 	}
 
 	@Bean
-	public RpcfxInvoker createInvoker(@Autowired RpcfxResolver resolver){
+	public RpcfxInvoker createInvoker(@Autowired RpcfxReflectionResolver resolver){
 		return new RpcfxInvoker(resolver);
 	}
 
 	@Bean
-	public RpcfxResolver createResolver(){
-		return new DemoResolver();
+	public RpcfxReflectionResolver createReflectionResolver() {
+		return new ReflectionResolver();
 	}
+
+//	@Bean
+//	public RpcfxResolver createResolver(){
+//		return new DemoResolver();
+//	}
 
 	// 能否去掉name
 	//

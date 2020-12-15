@@ -1,4 +1,4 @@
-package io.kimmking.rpcfx.api;
+package io.kimmking.rpcfx.param;
 
 public class RpcfxRequest {
 
