@@ -32,19 +32,19 @@ public class RpcfxServerApplication {
 	}
 
 	@Bean
-	public RpcfxInvoker createInvoker(@Autowired RpcfxReflectionResolver resolver){
+	public RpcfxInvoker createInvoker(@Autowired RpcfxResolver resolver){
 		return new RpcfxInvoker(resolver);
 	}
 
-	@Bean
-	public RpcfxReflectionResolver createReflectionResolver() {
-		return new ReflectionResolver();
-	}
-
 //	@Bean
-//	public RpcfxResolver createResolver(){
-//		return new DemoResolver();
+//	public RpcfxReflectionResolver createReflectionResolver() {
+//		return new ReflectionResolver();
 //	}
+
+	@Bean
+	public RpcfxResolver createResolver(){
+		return new DemoResolver();
+	}
 
 	// 能否去掉name
 	//

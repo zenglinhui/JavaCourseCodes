@@ -3,6 +3,7 @@ package io.kimmking.rpcfx.client;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.parser.ParserConfig;
+import io.kimmking.rpcfx.exception.RpcfxException;
 import io.kimmking.rpcfx.param.RpcfxRequest;
 import io.kimmking.rpcfx.param.RpcfxResponse;
 import okhttp3.MediaType;
@@ -18,7 +19,11 @@ import java.lang.reflect.Proxy;
 public final class Rpcfx {
 
     static {
-        ParserConfig.getGlobalInstance().addAccept("io.kimmking");
+        ParserConfig config = ParserConfig.getGlobalInstance();
+        config.addAccept("io.kimmking");
+        config.setAutoTypeSupport(true);
+
+        //ParserConfig.getGlobalInstance().addAccept("io.kimmking");
     }
 
     public static <T> T create(final Class<T> serviceClass, final String url) {
@@ -51,11 +56,14 @@ public final class Rpcfx {
             request.setParams(params);
 
             RpcfxResponse response = post(request, url);
-
+            if (response.isStatus()) {
+                return response.getResult();
+            } else {
+                RpcfxException e = (RpcfxException) response.getException();
+                return null;
+            }
             // 这里判断response.status，处理异常
             // 考虑封装一个全局的RpcfxException
-
-            return JSON.parse(response.getResult().toString());
         }
 
         private RpcfxResponse post(RpcfxRequest req, String url) throws IOException {
