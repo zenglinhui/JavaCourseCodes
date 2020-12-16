@@ -12,6 +12,9 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+import org.springframework.cglib.proxy.Enhancer;
+import org.springframework.cglib.proxy.MethodInterceptor;
+import org.springframework.cglib.proxy.MethodProxy;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
@@ -27,13 +30,17 @@ public final class Rpcfx {
     }
 
     public static <T> T create(final Class<T> serviceClass, final String url) {
-
+        //Gglib方式
+        Enhancer enhancer = new Enhancer();
+        enhancer.setCallback(new RpcfxInvocationHandler(serviceClass, url));
+        enhancer.setSuperclass(serviceClass);
+        return (T) enhancer.create();
         // 0. 替换动态代理 -> AOP
-        return (T) Proxy.newProxyInstance(Rpcfx.class.getClassLoader(), new Class[]{serviceClass}, new RpcfxInvocationHandler(serviceClass, url));
+        //return (T) Proxy.newProxyInstance(Rpcfx.class.getClassLoader(), new Class[]{serviceClass}, new RpcfxInvocationHandler(serviceClass, url));
 
     }
 
-    public static class RpcfxInvocationHandler implements InvocationHandler {
+    public static class RpcfxInvocationHandler implements InvocationHandler, MethodInterceptor {
 
         public static final MediaType JSONTYPE = MediaType.get("application/json; charset=utf-8");
 
@@ -52,23 +59,15 @@ public final class Rpcfx {
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] params) throws Throwable {
-
-            RpcfxRequest request = new RpcfxRequest();
-            request.setServiceClass(this.serviceClass.getName());
-            request.setMethod(method.getName());
-            request.setParams(params);
-
-            RpcfxResponse response = post(request, url);
-            // 这里判断response.status，处理异常
-            // 考虑封装一个全局的RpcfxException
-            if (!response.isStatus()) {
-                throw new RpcfxException("invoke error", response.getException());
-            }
-            return XStreamUtils.fromBean(stream, response.getResult().toString());
+            return post(method, params, url);
         }
 
-        private RpcfxResponse post(RpcfxRequest req, String url) throws IOException {
-            String reqJson = JSON.toJSONString(req);
+        private Object post(Method method, Object[] params, String url) throws IOException, RpcfxException {
+            RpcfxRequest rpcfxRequest = new RpcfxRequest();
+            rpcfxRequest.setServiceClass(this.serviceClass.getName());
+            rpcfxRequest.setMethod(method.getName());
+            rpcfxRequest.setParams(params);
+            String reqJson = JSON.toJSONString(rpcfxRequest);
             System.out.println("req json: " + reqJson);
 
             // 1.可以复用client
@@ -80,7 +79,18 @@ public final class Rpcfx {
                     .build();
             String respJson = client.newCall(request).execute().body().string();
             System.out.println("resp json: " + respJson);
-            return JSON.parseObject(respJson, RpcfxResponse.class);
+            RpcfxResponse response = JSON.parseObject(respJson, RpcfxResponse.class);
+            // 这里判断response.status，处理异常
+            // 考虑封装一个全局的RpcfxException
+            if (!response.isStatus()) {
+                throw new RpcfxException("invoke error", response.getException());
+            }
+            return XStreamUtils.fromBean(stream, response.getResult().toString());
+        }
+
+        @Override
+        public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
+            return post(method, objects, url);
         }
     }
 }
