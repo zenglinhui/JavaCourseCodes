@@ -3,9 +3,11 @@ package io.kimmking.rpcfx.client;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.parser.ParserConfig;
+import com.thoughtworks.xstream.XStream;
 import io.kimmking.rpcfx.exception.RpcfxException;
 import io.kimmking.rpcfx.param.RpcfxRequest;
 import io.kimmking.rpcfx.param.RpcfxResponse;
+import io.kimmking.rpcfx.utils.XStreamUtils;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -19,7 +21,9 @@ import java.lang.reflect.Proxy;
 public final class Rpcfx {
 
     static {
-        ParserConfig.getGlobalInstance().addAccept("io.kimmking");
+        ParserConfig parserConfig = ParserConfig.getGlobalInstance();
+        parserConfig.addAccept("io.kimmking");
+        parserConfig.setAutoTypeSupport(true);
     }
 
     public static <T> T create(final Class<T> serviceClass, final String url) {
@@ -35,6 +39,7 @@ public final class Rpcfx {
 
         private final Class<?> serviceClass;
         private final String url;
+        private final XStream stream = XStreamUtils.createToJson();
 
         public <T> RpcfxInvocationHandler(Class<T> serviceClass, String url) {
             this.serviceClass = serviceClass;
@@ -47,6 +52,7 @@ public final class Rpcfx {
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] params) throws Throwable {
+
             RpcfxRequest request = new RpcfxRequest();
             request.setServiceClass(this.serviceClass.getName());
             request.setMethod(method.getName());
@@ -58,7 +64,7 @@ public final class Rpcfx {
             if (!response.isStatus()) {
                 throw new RpcfxException("invoke error", response.getException());
             }
-            return JSON.parse(response.getResult().toString());
+            return XStreamUtils.fromBean(stream, response.getResult().toString());
         }
 
         private RpcfxResponse post(RpcfxRequest req, String url) throws IOException {
