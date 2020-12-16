@@ -19,11 +19,7 @@ import java.lang.reflect.Proxy;
 public final class Rpcfx {
 
     static {
-        ParserConfig config = ParserConfig.getGlobalInstance();
-        config.addAccept("io.kimmking");
-        config.setAutoTypeSupport(true);
-
-        //ParserConfig.getGlobalInstance().addAccept("io.kimmking");
+        ParserConfig.getGlobalInstance().addAccept("io.kimmking");
     }
 
     public static <T> T create(final Class<T> serviceClass, final String url) {
@@ -39,6 +35,7 @@ public final class Rpcfx {
 
         private final Class<?> serviceClass;
         private final String url;
+
         public <T> RpcfxInvocationHandler(Class<T> serviceClass, String url) {
             this.serviceClass = serviceClass;
             this.url = url;
@@ -56,19 +53,17 @@ public final class Rpcfx {
             request.setParams(params);
 
             RpcfxResponse response = post(request, url);
-            if (response.isStatus()) {
-                return response.getResult();
-            } else {
-                RpcfxException e = (RpcfxException) response.getException();
-                return null;
-            }
             // 这里判断response.status，处理异常
             // 考虑封装一个全局的RpcfxException
+            if (!response.isStatus()) {
+                throw new RpcfxException("invoke error", response.getException());
+            }
+            return JSON.parse(response.getResult().toString());
         }
 
         private RpcfxResponse post(RpcfxRequest req, String url) throws IOException {
             String reqJson = JSON.toJSONString(req);
-            System.out.println("req json: "+reqJson);
+            System.out.println("req json: " + reqJson);
 
             // 1.可以复用client
             // 2.尝试使用httpclient或者netty client
@@ -78,7 +73,7 @@ public final class Rpcfx {
                     .post(RequestBody.create(JSONTYPE, reqJson))
                     .build();
             String respJson = client.newCall(request).execute().body().string();
-            System.out.println("resp json: "+respJson);
+            System.out.println("resp json: " + respJson);
             return JSON.parseObject(respJson, RpcfxResponse.class);
         }
     }

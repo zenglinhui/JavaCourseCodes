@@ -14,24 +14,24 @@ import java.util.Arrays;
 
 public class RpcfxInvoker {
 
-    private RpcfxResolver resolver;
-
-    public RpcfxInvoker(RpcfxResolver resolver){
-        this.resolver = resolver;
-    }
-    //private RpcfxReflectionResolver reflectionResolver;
-
-//    public RpcfxInvoker(RpcfxReflectionResolver reflectionResolver) {
-//        this.reflectionResolver = reflectionResolver;
+//    private RpcfxResolver resolver;
+//
+//    public RpcfxInvoker(RpcfxResolver resolver){
+//        this.resolver = resolver;
 //    }
+    private RpcfxReflectionResolver reflectionResolver;
+
+    public RpcfxInvoker(RpcfxReflectionResolver reflectionResolver) {
+        this.reflectionResolver = reflectionResolver;
+    }
 
     public RpcfxResponse invoke(RpcfxRequest request) {
         RpcfxResponse response = new RpcfxResponse();
         String serviceClass = request.getServiceClass();
 
         // 作业1：改成泛型和反射
-        Object service = resolver.resolve(serviceClass);//this.applicationContext.getBean(serviceClass);
-        //Object service = reflectionResolver.resolve(serviceClass);
+        //Object service = resolver.resolve(serviceClass);//this.applicationContext.getBean(serviceClass);
+        Object service = reflectionResolver.resolve(serviceClass);
 
         try {
             Method method = resolveMethodFromClass(service.getClass(), request.getMethod());

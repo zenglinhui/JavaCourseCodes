@@ -10,8 +10,12 @@ public class RpcfxException extends Exception {
         super(throwable);
     }
 
-    public RpcfxException(String exception) {
-        super(exception);
+    public RpcfxException(String message) {
+        super(message);
+    }
+
+    public RpcfxException(String message, Throwable throwable) {
+        super(message, throwable);
     }
 
 }
