@@ -1,4 +1,4 @@
-package io.kimmking.rpcfx.utils;
+package io.kimmking.rpcfx.client;
 
 import io.kimmking.rpcfx.handler.ClientHandler;
 import io.netty.bootstrap.Bootstrap;
@@ -10,7 +10,7 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.CharsetUtil;
 
-public class NettyClientUtils {
+public class NettyClient {
 
     private final String host;
 
@@ -19,7 +19,7 @@ public class NettyClientUtils {
     private final String req;
 
 
-    public NettyClientUtils(String host, Integer port, String req) {
+    public NettyClient(String host, Integer port, String req) {
         this.host = host;
         this.port = port;
         this.req = req;
@@ -48,6 +48,10 @@ public class NettyClientUtils {
             eventLoopGroup.shutdownGracefully();
         }
         return resp;
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        new NettyClient("127.0.0.1", 8888, "hello netty").start();
     }
 
 }

@@ -8,7 +8,6 @@ import io.kimmking.rpcfx.exception.RpcfxException;
 import io.kimmking.rpcfx.param.RpcfxRequest;
 import io.kimmking.rpcfx.param.RpcfxResponse;
 import io.kimmking.rpcfx.utils.ClientUtils;
-import io.kimmking.rpcfx.utils.NettyClientUtils;
 import io.kimmking.rpcfx.utils.XStreamUtils;
 import okhttp3.MediaType;
 import okhttp3.Request;

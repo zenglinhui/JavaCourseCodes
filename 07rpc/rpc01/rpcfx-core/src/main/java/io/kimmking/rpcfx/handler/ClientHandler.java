@@ -19,7 +19,7 @@ public class ClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
     @Override
     protected void channelRead0(ChannelHandlerContext channelHandlerContext, ByteBuf byteBuf) throws Exception {
 
-        System.out.println(byteBuf.toString(CharsetUtil.UTF_8));
+        System.out.println("Client receiver:" + byteBuf.toString(CharsetUtil.UTF_8));
 
     }
 
