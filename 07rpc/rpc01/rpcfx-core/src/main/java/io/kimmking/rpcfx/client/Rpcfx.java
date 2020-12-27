@@ -7,9 +7,10 @@ import com.thoughtworks.xstream.XStream;
 import io.kimmking.rpcfx.exception.RpcfxException;
 import io.kimmking.rpcfx.param.RpcfxRequest;
 import io.kimmking.rpcfx.param.RpcfxResponse;
+import io.kimmking.rpcfx.utils.ClientUtils;
+import io.kimmking.rpcfx.utils.NettyClientUtils;
 import io.kimmking.rpcfx.utils.XStreamUtils;
 import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import org.springframework.cglib.proxy.Enhancer;
@@ -19,7 +20,6 @@ import org.springframework.cglib.proxy.MethodProxy;
 import java.io.IOException;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
 
 public final class Rpcfx {
 
@@ -40,18 +40,36 @@ public final class Rpcfx {
 
     }
 
+    public static <T> T create(final Class<T> serviceClass, final String host, final Integer port) {
+        //Gglib方式
+        Enhancer enhancer = new Enhancer();
+        //enhancer.setCallback(new RpcfxInvocationHandler(serviceClass, host, port));
+        enhancer.setSuperclass(serviceClass);
+        return (T) enhancer.create();
+        // 0. 替换动态代理 -> AOP
+        //return (T) Proxy.newProxyInstance(Rpcfx.class.getClassLoader(), new Class[]{serviceClass}, new RpcfxInvocationHandler(serviceClass, url));
+
+    }
+
     public static class RpcfxInvocationHandler implements InvocationHandler, MethodInterceptor {
 
         public static final MediaType JSONTYPE = MediaType.get("application/json; charset=utf-8");
 
         private final Class<?> serviceClass;
         private final String url;
+//        private final String host;
+//        private final Integer port;
         private final XStream stream = XStreamUtils.createToJson();
 
         public <T> RpcfxInvocationHandler(Class<T> serviceClass, String url) {
             this.serviceClass = serviceClass;
             this.url = url;
         }
+//        public <T> RpcfxInvocationHandler(Class<T> serviceClass, String host, Integer port) {
+//            this.serviceClass = serviceClass;
+//            this.host = host;
+//            this.port = port;
+//        }
 
         // 可以尝试，自己去写对象序列化，二进制还是文本的，，，rpcfx是xml自定义序列化、反序列化，json: code.google.com/p/rpcfx
         // int byte char float double long bool
@@ -62,7 +80,7 @@ public final class Rpcfx {
             return post(method, params, url);
         }
 
-        private Object post(Method method, Object[] params, String url) throws IOException, RpcfxException {
+        private Object post(Method method, Object[] params, String url) throws IOException, RpcfxException, InterruptedException {
             RpcfxRequest rpcfxRequest = new RpcfxRequest();
             rpcfxRequest.setServiceClass(this.serviceClass.getName());
             rpcfxRequest.setMethod(method.getName());
@@ -72,12 +90,14 @@ public final class Rpcfx {
 
             // 1.可以复用client
             // 2.尝试使用httpclient或者netty client
-            OkHttpClient client = new OkHttpClient();
+            //OkHttpClient client = new OkHttpClient();
             final Request request = new Request.Builder()
                     .url(url)
                     .post(RequestBody.create(JSONTYPE, reqJson))
                     .build();
-            String respJson = client.newCall(request).execute().body().string();
+            String respJson = ClientUtils.execute(request).body().string();
+            /*NettyClientUtils nettyClientUtils = new NettyClientUtils(host, port, reqJson);
+            String respJson = nettyClientUtils.start();*/
             System.out.println("resp json: " + respJson);
             RpcfxResponse response = JSON.parseObject(respJson, RpcfxResponse.class);
             // 这里判断response.status，处理异常
